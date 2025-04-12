@@ -15,33 +15,32 @@ use App\Filament\Resources\RoleResource\Pages;
 class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
+    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static ?string $navigationLabel = 'Roles';
+    protected static ?string $modelLabel = 'Rol';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            TextInput::make('nombre') // <-- aquí estaba 'name'
+            TextInput::make('nombre')
                 ->label('Nombre')
-                ->required(),
+                ->required()
+                ->maxLength(255),
 
             TextInput::make('slug')
                 ->label('Slug')
                 ->required()
-                ->unique(ignoreRecord: true),
+                ->unique(ignoreRecord: true)
+                ->maxLength(255),
         ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table->columns([
-            TextColumn::make('nombre') // <-- aquí también
-                ->label('Nombre'),
-
-            TextColumn::make('slug')
-                ->label('Slug'),
-
-            TextColumn::make('created_at')
-                ->label('Creado')
-                ->dateTime(),
+            TextColumn::make('nombre')->label('Nombre'),
+            TextColumn::make('slug')->label('Slug'),
+            TextColumn::make('created_at')->label('Fecha de creación')->dateTime('d/m/Y H:i'),
         ]);
     }
 
@@ -49,9 +48,18 @@ class RoleResource extends Resource
     {
         return [
             'index' => Pages\ListRoles::route('/'),
-            'create' => Pages\CreateRole::route('/create'),
-            'edit' => Pages\EditRole::route('/{record}/edit'),
+            'create' => Pages\CreateRole::route('/crear'),
+            'edit' => Pages\EditRole::route('/{record}/editar'),
         ];
     }
-}
 
+    public static function canViewAny(): bool
+    {
+        return auth()->check() && auth()->user()->isAdmin();
+    }
+
+    protected static function shouldRegisterNavigation(): bool
+    {
+        return auth()->check() && auth()->user()->isAdmin();
+    }
+}

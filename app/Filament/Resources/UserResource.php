@@ -4,18 +4,21 @@ namespace App\Filament\Resources;
 
 use Filament\Forms;
 use Filament\Tables;
+use App\Models\User;
 use Filament\Resources\Form;
 use Filament\Resources\Table;
 use Filament\Resources\Resource;
-use App\Models\User;
+use App\Filament\Resources\UserResource\Pages;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
-use App\Filament\Resources\UserResource\Pages;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
+    protected static ?string $navigationIcon = 'heroicon-o-user';
+    protected static ?string $navigationLabel = 'Usuarios';
+    protected static ?string $modelLabel = 'Usuario';
 
     public static function form(Form $form): Form
     {
@@ -26,7 +29,7 @@ class UserResource extends Resource
                 ->maxLength(255),
 
             TextInput::make('email')
-                ->label('Correo')
+                ->label('Correo electrónico')
                 ->email()
                 ->required()
                 ->maxLength(255),
@@ -52,8 +55,8 @@ class UserResource extends Resource
         return $table->columns([
             TextColumn::make('name')->label('Nombre'),
             TextColumn::make('email')->label('Correo'),
-            TextColumn::make('role.nombre')->label('Rol'), // <- También aquí
-            TextColumn::make('created_at')->label('Creado')->dateTime(),
+            TextColumn::make('role.nombre')->label('Rol'),
+            TextColumn::make('created_at')->label('Fecha de creación')->dateTime('d/m/Y H:i'),
         ]);
     }
 
@@ -61,8 +64,19 @@ class UserResource extends Resource
     {
         return [
             'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            'create' => Pages\CreateUser::route('/crear'),
+            'edit' => Pages\EditUser::route('/{record}/editar'),
         ];
+    }
+
+    // Solo permite que el administrador vea esta sección
+    public static function canViewAny(): bool
+    {
+        return auth()->check() && auth()->user()->isAdmin();
+    }
+
+    protected static function shouldRegisterNavigation(): bool
+    {
+        return auth()->check() && auth()->user()->isAdmin();
     }
 }
