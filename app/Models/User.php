@@ -52,12 +52,18 @@ class User extends Authenticatable implements FilamentUser
         return $this->role?->nombre  === 'Coordinador';
     }
 
+    public function isRevisoraFiscal(): bool
+    {
+        return $this->role?->nombre === 'Revisora_Fiscal';
+    }
+
+
     /**
      * Permitir acceso a Filament solo a usuarios autorizados
      */
     public function canAccessFilament(): bool
     {
-        return $this->role && in_array($this->role->nombre, ['Administrador', 'Coordinador']);
+        return $this->role && in_array($this->role->nombre, ['Administrador', 'Coordinador',  'Revisora_Fiscal']);
     }
 
 }

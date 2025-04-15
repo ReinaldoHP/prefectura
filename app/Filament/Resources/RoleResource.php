@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources;
 
-use App\Models\Role;
 use Filament\Forms;
 use Filament\Tables;
+use App\Models\Role;
 use Filament\Resources\Form;
 use Filament\Resources\Table;
 use Filament\Resources\Resource;
@@ -41,6 +41,14 @@ class RoleResource extends Resource
             TextColumn::make('nombre')->label('Nombre'),
             TextColumn::make('slug')->label('Slug'),
             TextColumn::make('created_at')->label('Fecha de creación')->dateTime('d/m/Y H:i'),
+            TextColumn::make('updated_at')->label('Última actualización')->dateTime('d/m/Y H:i'),
+        ])
+        ->actions([
+            Tables\Actions\EditAction::make(),
+            Tables\Actions\DeleteAction::make(),
+        ])
+        ->bulkActions([
+            Tables\Actions\DeleteBulkAction::make(),
         ]);
     }
 
@@ -55,11 +63,11 @@ class RoleResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->check() && auth()->user()->isAdmin();
+        return auth()->check() && auth()->user()?->isAdmin();
     }
 
     protected static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->isAdmin();
+        return auth()->check() && auth()->user()?->isAdmin();
     }
 }

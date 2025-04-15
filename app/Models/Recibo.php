@@ -22,5 +22,6 @@ class Recibo extends Model
         'linea',
         'color',
         'forma_pago',
+        'estado',
     ];
 }

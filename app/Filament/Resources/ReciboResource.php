@@ -20,18 +20,20 @@ class ReciboResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form->schema([
-            Forms\Components\TextInput::make('ciudad')->label('Ciudad')->required(),
-            Forms\Components\DatePicker::make('fecha')->label('Fecha')->required(),
-            Forms\Components\TextInput::make('recibido_de')->label('Recibido de')->required(),
-            Forms\Components\TextInput::make('direccion')->label('Dirección')->required(),
-            Forms\Components\TextInput::make('cc')->label('Cédula')->required(),
-            Forms\Components\TextInput::make('telefono')->label('Teléfono')->required(),
-            Forms\Components\TextInput::make('suma_letras')->label('Suma en letras')->required(),
-            Forms\Components\Textarea::make('concepto')->label('Concepto')->required(),
-            Forms\Components\TextInput::make('marca')->label('Marca')->nullable(),
-            Forms\Components\TextInput::make('linea')->label('Línea')->nullable(),
-            Forms\Components\TextInput::make('color')->label('Color')->nullable(),
+        $user = auth()->user();
+
+        return $form->schema(array_filter([
+            Forms\Components\TextInput::make('ciudad')->label('Ciudad')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\DatePicker::make('fecha')->label('Fecha')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('recibido_de')->label('Recibido de')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('direccion')->label('Dirección')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('cc')->label('Cédula')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('telefono')->label('Teléfono')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('suma_letras')->label('Suma en letras')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\Textarea::make('concepto')->label('Concepto')->required()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('marca')->label('Marca')->nullable()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('linea')->label('Línea')->nullable()->disabled(fn () => $user->isRevisoraFiscal()),
+            Forms\Components\TextInput::make('color')->label('Color')->nullable()->disabled(fn () => $user->isRevisoraFiscal()),
             Forms\Components\Select::make('forma_pago')
                 ->label('Forma de pago')
                 ->options([
@@ -40,8 +42,22 @@ class ReciboResource extends Resource
                     'cheque' => 'Cheque',
                 ])
                 ->default('efectivo')
-                ->required(),
-        ]);
+                ->required()
+                ->disabled(fn () => $user->isRevisoraFiscal()),
+
+            // Solo Revisora Fiscal puede ver estos campos
+            $user->isRevisoraFiscal() ? Forms\Components\Select::make('estado')
+                ->label('Estado del recibo')
+                ->options([
+                    'pendiente' => 'Pendiente',
+                    'aprobado' => 'Aprobado',
+                    'denegado' => 'Denegado',
+                ])
+                ->required() : null,
+
+            $user->isRevisoraFiscal() ? Forms\Components\Textarea::make('observaciones')
+                ->label('Observaciones') : null,
+        ]));
     }
 
     public static function table(Table $table): Table
@@ -52,14 +68,27 @@ class ReciboResource extends Resource
             Tables\Columns\TextColumn::make('fecha')->label('Fecha')->date(),
             Tables\Columns\TextColumn::make('telefono')->label('Teléfono'),
             Tables\Columns\TextColumn::make('forma_pago')->label('Forma de pago'),
+            Tables\Columns\BadgeColumn::make('estado')->label('Estado')->colors([
+                'secondary' => 'pendiente',
+                'success' => 'aprobado',
+                'danger' => 'denegado',
+            ]),
             Tables\Columns\TextColumn::make('created_at')->label('Creado')->dateTime('d/m/Y H:i'),
+        ])
+        ->filters([
+            Tables\Filters\SelectFilter::make('estado')
+                ->label('Filtrar por estado')
+                ->options([
+                    'pendiente' => 'Pendiente',
+                    'aprobado' => 'Aprobado',
+                    'denegado' => 'Denegado',
+                ]),
         ])
         ->actions([
             Tables\Actions\EditAction::make(),
-            Tables\Actions\DeleteAction::make(),
         ])
         ->bulkActions([
-            Tables\Actions\DeleteBulkAction::make(),
+            ...(auth()->user()?->isCoordinador() ? [Tables\Actions\DeleteBulkAction::make()] : []),
         ]);
     }
 
@@ -72,14 +101,34 @@ class ReciboResource extends Resource
         ];
     }
 
-    // 👇 Solo Coordinador puede acceder a Recibos
     public static function canViewAny(): bool
     {
-        return auth()->check() && auth()->user()?->isCoordinador();
+        return auth()->check() && (
+            auth()->user()?->isCoordinador() ||
+            auth()->user()?->isRevisoraFiscal()
+        );
     }
 
     protected static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()?->isCoordinador();
+        return auth()->check() && (
+            auth()->user()?->isCoordinador() ||
+            auth()->user()?->isRevisoraFiscal()
+        );
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->isCoordinador() || auth()->user()?->isRevisoraFiscal();
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->isCoordinador();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->isCoordinador();
     }
 }
