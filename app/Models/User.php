@@ -17,6 +17,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'role_id',
+        'activo',
     ];
 
     protected $hidden = [
@@ -57,13 +58,25 @@ class User extends Authenticatable implements FilamentUser
         return $this->role?->nombre === 'Revisora_Fiscal';
     }
 
+    public function isCaja(): bool
+{
+    return $this->role?->slug === 'caja';
+}
+
+
 
     /**
      * Permitir acceso a Filament solo a usuarios autorizados
      */
     public function canAccessFilament(): bool
-    {
-        return $this->role && in_array($this->role->nombre, ['Administrador', 'Coordinador',  'Revisora_Fiscal']);
-    }
+{
+    return $this->activo && $this->role && in_array($this->role->nombre, [
+        'Administrador',
+        'Coordinador',
+        'Revisora_Fiscal',
+        'Caja',
+    ]);
+}
+
 
 }

@@ -12,6 +12,10 @@ use App\Filament\Resources\UserResource\Pages;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ToggleColumn;
+
+
 
 class UserResource extends Resource
 {
@@ -47,6 +51,11 @@ class UserResource extends Resource
                 ->searchable()
                 ->preload()
                 ->required(),
+
+            Toggle::make('activo')
+                ->label('Usuario activo')
+                ->visible(fn () => auth()->user()?->isAdmin())
+                ->default(true),       
         ]);
     }
 
@@ -56,6 +65,13 @@ class UserResource extends Resource
             TextColumn::make('name')->label('Nombre'),
             TextColumn::make('email')->label('Correo'),
             TextColumn::make('role.nombre')->label('Rol'),
+    
+            ToggleColumn::make('activo')
+                ->label('Activo')
+                ->sortable()
+                ->onColor('success')
+                ->offColor('danger'),
+    
             TextColumn::make('created_at')->label('Fecha de creación')->dateTime('d/m/Y H:i'),
         ]);
     }
