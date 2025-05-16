@@ -9,6 +9,8 @@ use Filament\Resources\Form;
 use Filament\Resources\Resource;
 use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Builder;
 
 class ClienteResource extends Resource
 {
@@ -32,19 +34,12 @@ class ClienteResource extends Resource
                 ->required(),
 
             Forms\Components\TextInput::make('numero_documento')->label('Número de documento')->required(),
-
             Forms\Components\TextInput::make('nombres')->label('Nombres')->required(),
-
             Forms\Components\TextInput::make('apellidos')->label('Apellidos')->required(),
-
-            Forms\Components\TextInput::make('municipio')->label('Municipio')->required(),
-
             Forms\Components\TextInput::make('departamento')->label('Departamento')->required(),
-
+            Forms\Components\TextInput::make('municipio')->label('Municipio')->required(),
             Forms\Components\TextInput::make('direccion')->label('Dirección')->required(),
-
             Forms\Components\TextInput::make('celular')->label('Celular')->tel()->required(),
-
             Forms\Components\TextInput::make('correo')->label('Correo')->email()->nullable(),
         ]);
     }
@@ -53,15 +48,21 @@ class ClienteResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('tipo_documento')->label('Tipo'),
-                Tables\Columns\TextColumn::make('numero_documento')->label('Documento')->searchable(),
-                Tables\Columns\TextColumn::make('nombres'),
-                Tables\Columns\TextColumn::make('apellidos'),
-                Tables\Columns\TextColumn::make('municipio'),
-                Tables\Columns\TextColumn::make('departamento'),
-                Tables\Columns\TextColumn::make('direccion'),
-                Tables\Columns\TextColumn::make('celular'),
-                Tables\Columns\TextColumn::make('correo')->sortable(),
+                TextColumn::make('tipo_documento')->label('Tipo'),
+                TextColumn::make('numero_documento')->label('Documento')->searchable(),
+                TextColumn::make('nombres'),
+                TextColumn::make('apellidos'),
+                TextColumn::make('departamento'),
+                TextColumn::make('municipio'),
+                TextColumn::make('direccion'),
+                TextColumn::make('celular'),
+                TextColumn::make('correo')->sortable(),
+
+                // ✅ Columna para contar motos
+                TextColumn::make('ventas_count')
+                    ->label('Motos')
+                    ->suffix(' moto(s)')
+
             ])
             ->filters([])
             ->actions([
@@ -70,6 +71,12 @@ class ClienteResource extends Resource
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    // ✅ Cargar la relación motos_count para evitar el error de SQL
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->withCount('ventas');
     }
 
     public static function getPages(): array
